@@ -13,4 +13,3 @@ export class CreatePlayerProfileDto {
   @IsNotEmpty()
   lastName: string;
 }
-

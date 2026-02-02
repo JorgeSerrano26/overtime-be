@@ -167,6 +167,12 @@ model Category {
   sport         Sport     @relation(fields: [sportId], references: [id])
   playoffFormat String? // single_elimination, double_elimination, round_robin
   teamsPerZone  Int?
+  // Playoff configuration
+  teamsQualifyPerZone    Int?    @default(2) // Number of teams that qualify from each zone
+  playoffTeamsTotal      Int?    // Total teams in playoffs (overrides zone-based calculation)
+  playoffSeedingMethod   String? @default("zone_position") // zone_position, overall_record, points
+  regularPhaseCompleted  Boolean @default(false) // Indicates if regular phase is finished
+  playoffsGenerated      Boolean @default(false) // Indicates if playoffs have been generated
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   deletedAt     DateTime?
@@ -215,17 +221,18 @@ model TeamZone {
 // ============================================
 
 model Venue {
-  id        String    @id @default(uuid())
-  name      String
-  address   String?
-  city      String?
-  province  String?
-  country   String    @default("Argentina")
-  capacity  Int?
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  id            String    @id @default(uuid())
+  name          String
+  address       String?
+  city          String?
+  province      String?
+  country       String    @default("Argentina")
+  googleMapsUrl String?
+  capacity      Int?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
 
   matches Match[]
 
@@ -238,10 +245,10 @@ model Venue {
 
 model Match {
   id             String    @id @default(uuid())
-  homeTeamId     String
-  homeTeam       Team      @relation("HomeTeam", fields: [homeTeamId], references: [id])
-  awayTeamId     String
-  awayTeam       Team      @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  homeTeamId     String?   // Nullable for playoff matches where team is TBD
+  homeTeam       Team?     @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeamId     String?   // Nullable for playoff matches where team is TBD
+  awayTeam       Team?     @relation("AwayTeam", fields: [awayTeamId], references: [id])
   categoryId     String?
   category       Category? @relation(fields: [categoryId], references: [id])
   zoneId         String?
@@ -251,12 +258,23 @@ model Match {
   matchDate      DateTime
   matchTime      String?
   status         String // programado, en_curso, suspendido, cancelado, reprogramado, finalizado
-  matchType      String // regular, playoff, final, amistoso
+  matchType      String // regular, playoff, semifinal, final, third_place, amistoso
   homeScore      Int       @default(0)
   awayScore      Int       @default(0)
   costPerTeam    Float?
   liveStatsJson  Json?
   processedStats Json?
+  // Playoff bracket fields
+  playoffRound     Int?    // 1=Final, 2=Semifinal, 3=Quarterfinal, etc. (counted from final)
+  playoffPosition  Int?    // Position within the round (1, 2, 3, 4 for quarterfinals)
+  bracketPosition  String? // Unique bracket identifier like "QF1", "SF1", "F", "3rd"
+  homeSeed         Int?    // Seed number of home team
+  awaySeed         Int?    // Seed number of away team
+  // References to source matches for bracket advancement
+  homeFromMatchId  String? // Winner/loser of this match becomes home team
+  awayFromMatchId  String? // Winner/loser of this match becomes away team
+  homeFromPosition String? // "winner" or "loser" from source match
+  awayFromPosition String? // "winner" or "loser" from source match
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
@@ -274,6 +292,8 @@ model Match {
   @@index([status])
   @@index([matchDate])
   @@index([status, matchDate])
+  @@index([playoffRound])
+  @@index([bracketPosition])
   @@map("matches")
 }
 
