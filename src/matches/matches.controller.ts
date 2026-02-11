@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { MatchesService } from './matches.service';
 import { CreateMatchDto } from './dto/create-match.dto';
 import { UpdateMatchDto } from './dto/update-match.dto';
@@ -17,7 +18,9 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { ParseUUIDPipe, ParseOptionalUUIDPipe } from '../common/pipes/parse-uuid.pipe';
 
+@ApiTags('matches')
 @Controller('matches')
 export class MatchesController {
   constructor(private readonly matchesService: MatchesService) {}
@@ -33,9 +36,9 @@ export class MatchesController {
   findAll(
     @Query() paginationDto: PaginationDto,
     @Query('status') status?: string,
-    @Query('categoryId') categoryId?: string,
-    @Query('zoneId') zoneId?: string,
-    @Query('venueId') venueId?: string,
+    @Query('categoryId', ParseOptionalUUIDPipe) categoryId?: string,
+    @Query('zoneId', ParseOptionalUUIDPipe) zoneId?: string,
+    @Query('venueId', ParseOptionalUUIDPipe) venueId?: string,
     @Query('matchType') matchType?: string,
   ) {
     return this.matchesService.findAll(paginationDto, {
@@ -49,20 +52,23 @@ export class MatchesController {
 
   @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.matchesService.findOne(id);
   }
 
   @Patch(':id')
   @Roles('admin')
-  update(@Param('id') id: string, @Body() updateMatchDto: UpdateMatchDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateMatchDto: UpdateMatchDto,
+  ) {
     return this.matchesService.update(id, updateMatchDto);
   }
 
   @Patch(':id/status')
   @Roles('admin')
   changeStatus(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() changeStatusDto: ChangeMatchStatusDto,
   ) {
     return this.matchesService.changeStatus(id, changeStatusDto);
@@ -70,14 +76,14 @@ export class MatchesController {
 
   @Delete(':id')
   @Roles('admin')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.matchesService.remove(id);
   }
 
   @Post(':id/announcements')
   @Roles('admin')
   createAnnouncement(
-    @Param('id') matchId: string,
+    @Param('id', ParseUUIDPipe) matchId: string,
     @Body() createAnnouncementDto: CreateAnnouncementDto,
     @CurrentUser('id') userId: string,
   ) {
@@ -90,7 +96,7 @@ export class MatchesController {
 
   @Public()
   @Get(':id/announcements')
-  getAnnouncements(@Param('id') matchId: string) {
+  getAnnouncements(@Param('id', ParseUUIDPipe) matchId: string) {
     return this.matchesService.getAnnouncements(matchId);
   }
 }

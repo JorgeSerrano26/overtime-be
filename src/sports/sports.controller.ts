@@ -7,12 +7,15 @@ import {
   Param,
   Delete,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { SportsService } from './sports.service';
 import { CreateSportDto } from './dto/create-sport.dto';
 import { UpdateSportDto } from './dto/update-sport.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { ParseUUIDPipe } from '../common/pipes/parse-uuid.pipe';
 
+@ApiTags('sports')
 @Controller('sports')
 export class SportsController {
   constructor(private readonly sportsService: SportsService) {}
@@ -31,19 +34,22 @@ export class SportsController {
 
   @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.sportsService.findOne(id);
   }
 
   @Roles('admin')
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSportDto: UpdateSportDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateSportDto: UpdateSportDto,
+  ) {
     return this.sportsService.update(id, updateSportDto);
   }
 
   @Roles('admin')
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.sportsService.remove(id);
   }
 }

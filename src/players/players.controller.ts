@@ -8,13 +8,16 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { PlayersService } from './players.service';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { ParseUUIDPipe } from '../common/pipes/parse-uuid.pipe';
 
+@ApiTags('players')
 @Controller('players')
 export class PlayersController {
   constructor(private readonly playersService: PlayersService) {}
@@ -33,19 +36,22 @@ export class PlayersController {
 
   @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.playersService.findOne(id);
   }
 
   @Roles('admin')
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePlayerDto: UpdatePlayerDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updatePlayerDto: UpdatePlayerDto,
+  ) {
     return this.playersService.update(id, updatePlayerDto);
   }
 
   @Roles('admin')
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.playersService.remove(id);
   }
 }

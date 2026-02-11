@@ -14,6 +14,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { ParseUUIDPipe } from '../../common/pipes/parse-uuid.pipe';
 
 @Controller('tournaments/:tournamentId/categories')
 export class CategoriesController {
@@ -22,7 +23,7 @@ export class CategoriesController {
   @Post()
   @Roles('admin')
   create(
-    @Param('tournamentId') tournamentId: string,
+    @Param('tournamentId', ParseUUIDPipe) tournamentId: string,
     @Body() createCategoryDto: CreateCategoryDto,
   ) {
     return this.categoriesService.create({
@@ -34,7 +35,7 @@ export class CategoriesController {
   @Public()
   @Get()
   findAll(
-    @Param('tournamentId') tournamentId: string,
+    @Param('tournamentId', ParseUUIDPipe) tournamentId: string,
     @Query() paginationDto: PaginationDto,
   ) {
     return this.categoriesService.findAll(tournamentId, paginationDto);
@@ -42,14 +43,14 @@ export class CategoriesController {
 
   @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.categoriesService.findOne(id);
   }
 
   @Patch(':id')
   @Roles('admin')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
   ) {
     return this.categoriesService.update(id, updateCategoryDto);
@@ -57,7 +58,7 @@ export class CategoriesController {
 
   @Delete(':id')
   @Roles('admin')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.categoriesService.remove(id);
   }
 }

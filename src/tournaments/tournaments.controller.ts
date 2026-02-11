@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { TournamentsService } from './tournaments.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
@@ -15,7 +16,9 @@ import { ChangeStatusDto } from './dto/change-status.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { ParseUUIDPipe } from '../common/pipes/parse-uuid.pipe';
 
+@ApiTags('tournaments')
 @Controller('tournaments')
 export class TournamentsController {
   constructor(private readonly tournamentsService: TournamentsService) {}
@@ -37,14 +40,14 @@ export class TournamentsController {
 
   @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.tournamentsService.findOne(id);
   }
 
   @Patch(':id')
   @Roles('admin')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateTournamentDto: UpdateTournamentDto,
   ) {
     return this.tournamentsService.update(id, updateTournamentDto);
@@ -53,7 +56,7 @@ export class TournamentsController {
   @Patch(':id/status')
   @Roles('admin')
   changeStatus(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() changeStatusDto: ChangeStatusDto,
   ) {
     return this.tournamentsService.changeStatus(id, changeStatusDto);
@@ -61,7 +64,7 @@ export class TournamentsController {
 
   @Delete(':id')
   @Roles('admin')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.tournamentsService.remove(id);
   }
 }

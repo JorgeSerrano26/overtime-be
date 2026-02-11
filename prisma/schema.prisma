@@ -136,6 +136,7 @@ model PlayerTeam {
 model Tournament {
   id                    String    @id @default(uuid())
   name                  String
+  slug                  String    @unique
   description           String?
   sportId               String
   sport                 Sport     @relation(fields: [sportId], references: [id])

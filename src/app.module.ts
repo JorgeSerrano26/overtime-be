@@ -14,19 +14,24 @@ import { VenuesModule } from './venues/venues.module';
 import { MatchesModule } from './matches/matches.module';
 import { RegistrationsModule } from './registrations/registrations.module';
 import { FixturesModule } from './fixtures/fixtures.module';
+import { StaffModule } from './staff/staff.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { PaymentsModule } from './payments/payments.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import supabaseConfig from './config/supabase.config';
+import resendConfig from './config/resend.config';
+import mercadopagoConfig from './config/mercadopago.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, supabaseConfig],
+      load: [appConfig, databaseConfig, supabaseConfig, resendConfig, mercadopagoConfig],
       envFilePath: '.env',
     }),
     ThrottlerModule.forRootAsync({
@@ -49,6 +54,9 @@ import supabaseConfig from './config/supabase.config';
     MatchesModule, // Maneja Partidos y Comunicados
     RegistrationsModule, // Maneja Inscripciones de Equipos a Torneos
     FixturesModule, // Maneja Fixture, Standings y Playoffs
+    StaffModule, // Maneja Personal (árbitros, oficiales, fotógrafos)
+    NotificationsModule, // Maneja Sistema de Notificaciones
+    PaymentsModule, // Maneja Pagos (inscripciones, partidos)
   ],
   controllers: [AppController],
   providers: [
@@ -67,7 +75,7 @@ import supabaseConfig from './config/supabase.config';
     },
     {
       provide: APP_FILTER,
-      useClass: HttpExceptionFilter,
+      useClass: AllExceptionsFilter,
     },
     {
       provide: APP_INTERCEPTOR,

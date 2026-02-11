@@ -8,6 +8,7 @@ import {
   Patch,
   Query,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { RegistrationsService } from './registrations.service';
 import { CreateRegistrationDto } from './dto/create-registration.dto';
 import { ApproveRegistrationDto } from './dto/approve-registration.dto';
@@ -15,7 +16,9 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { ParseUUIDPipe, ParseOptionalUUIDPipe } from '../common/pipes/parse-uuid.pipe';
 
+@ApiTags('registrations')
 @Controller('registrations')
 export class RegistrationsController {
   constructor(private readonly registrationsService: RegistrationsService) {}
@@ -32,9 +35,9 @@ export class RegistrationsController {
   @Get()
   findAll(
     @Query() paginationDto: PaginationDto,
-    @Query('tournamentId') tournamentId?: string,
-    @Query('teamId') teamId?: string,
-    @Query('categoryId') categoryId?: string,
+    @Query('tournamentId', ParseOptionalUUIDPipe) tournamentId?: string,
+    @Query('teamId', ParseOptionalUUIDPipe) teamId?: string,
+    @Query('categoryId', ParseOptionalUUIDPipe) categoryId?: string,
     @Query('status') status?: string,
   ) {
     return this.registrationsService.findAll(paginationDto, {
@@ -47,20 +50,23 @@ export class RegistrationsController {
 
   @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.registrationsService.findOne(id);
   }
 
   @Patch(':id/approve')
   @Roles('admin')
-  approve(@Param('id') id: string, @CurrentUser('id') userId: string) {
+  approve(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+  ) {
     return this.registrationsService.approve(id, userId);
   }
 
   @Patch(':id/reject')
   @Roles('admin')
   reject(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() approveRegistrationDto: ApproveRegistrationDto,
     @CurrentUser('id') userId: string,
   ) {
@@ -73,7 +79,7 @@ export class RegistrationsController {
 
   @Delete(':id')
   @Roles('admin')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.registrationsService.remove(id);
   }
 }
