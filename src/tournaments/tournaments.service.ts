@@ -12,6 +12,7 @@ import {
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
 import { ChangeStatusDto } from './dto/change-status.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import slugify from 'slugify';
 
 @Injectable()
 export class TournamentsService {
@@ -127,6 +128,7 @@ export class TournamentsService {
     const tournament = await this.prisma.tournament.create({
       data: {
         ...createTournamentDto,
+        slug: slugify(createTournamentDto.name),
         status: createTournamentDto.status || TournamentStatus.DRAFT,
         startDate: createTournamentDto.startDate
           ? new Date(createTournamentDto.startDate)
@@ -224,6 +226,75 @@ export class TournamentsService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async findBySlug(slug: string) {
+    // Aplicar transiciones automáticas antes de obtener
+    await this.applyAutomaticStatusTransitions();
+
+    const tournament = await this.prisma.tournament.findFirst({
+      where: { slug, deletedAt: null },
+      include: {
+        sport: true,
+        categories: {
+          include: {
+            sport: true,
+            zones: {
+              include: {
+                teamZones: {
+                  include: {
+                    team: {
+                      select: {
+                        id: true,
+                        name: true,
+                        logoUrl: true,
+                      },
+                    },
+                  },
+                },
+                _count: {
+                  select: {
+                    teamZones: true,
+                    matches: true,
+                  },
+                },
+              },
+            },
+            _count: {
+              select: {
+                zones: true,
+                registrations: true,
+                matches: true,
+              },
+            },
+          },
+        },
+        registrations: {
+          include: {
+            team: {
+              select: {
+                id: true,
+                name: true,
+                logoUrl: true,
+              },
+            },
+            category: true,
+          },
+        },
+        _count: {
+          select: {
+            categories: true,
+            registrations: true,
+          },
+        },
+      },
+    });
+
+    if (!tournament) {
+      throw new NotFoundException(`Tournament with slug "${slug}" not found`);
+    }
+
+    return tournament;
   }
 
   async findOne(id: string) {

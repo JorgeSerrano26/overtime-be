@@ -8,7 +8,7 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { TournamentsService } from './tournaments.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
@@ -36,6 +36,13 @@ export class TournamentsController {
     @Query('status') status?: string,
   ) {
     return this.tournamentsService.findAll(paginationDto, status);
+  }
+
+  @Public()
+  @Get('by-slug/:slug')
+  @ApiOperation({ summary: 'Get tournament by slug' })
+  findBySlug(@Param('slug') slug: string) {
+    return this.tournamentsService.findBySlug(slug);
   }
 
   @Public()
